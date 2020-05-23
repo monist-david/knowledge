@@ -1,0 +1,138 @@
+@import "bourbon";
+
+$light-gray:  #F5F5F5;
+$blue:        #338EDA;
+$white:       #FFF;
+$mid-gray:    #D8D8D8;
+$spacing:     1.5rem;
+$ui-height:   2rem;
+
+@mixin border-radius($value){
+  @include border-top-radius($value);
+  @include border-bottom-radius($value);
+}
+
+*{
+  -webkit-box-sizing: border-box;
+  -moz-box-sizing: border-box;
+  box-sizing: border-box;
+}
+
+body{
+  line-height: 1.5;
+}
+
+.container{
+  width: 600px;
+  margin: 0 auto;
+}
+
+.form{
+	font-size: 1rem;
+	input[type="text"], input[type="email"], input[type="password"],
+	textarea{
+		background: $light-gray;
+		border-color: $mid-gray;
+		border-style: solid;
+		@include border-radius(4px);
+		border-width: 1px;
+
+		box-shadow: none;
+		display: inline-block;
+		max-width: 100%;
+		padding: $spacing/2;
+
+		-webkit-appearance: none;
+		&:focus{
+			background: $white;
+			border-color: $blue;
+			outline: 0;
+		}
+	}
+	textarea, .textarea{
+		min-height: 150px;
+	}
+	input[type="submit"]:focus{
+		border: none;
+		outline: 0;
+	}
+	.textarea-tall{
+		min-height: 300px;
+	}
+}
+
+.form-stacked{
+	input[type="text"], input[type="email"], input[type="password"],
+	textarea{
+		display: block;
+		margin-bottom: $spacing;
+		width: 100%;
+	}
+}
+
+.form-block{
+	position: relative;
+}
+
+.form textarea{
+	@include border-top-radius(0);
+}
+
+.form-controls{
+	padding: 0 $spacing/2;
+	border-top: 1px solid $mid-gray;
+	border-left: 1px solid $mid-gray;
+	border-right: 1px solid $mid-gray;
+	border-top-left-radius: 4px;
+	border-top-right-radius: 4px;
+	.button{
+		padding: 0 $spacing/1.5;
+		font-size: 1.125rem;
+		&:hover{
+			color: $blue;
+		}
+	}
+}
+
+.button{
+  @include border-left-radius(4px);
+  @include border-right-radius(4px);
+  border: none;
+  cursor: pointer;
+  display: inline-block;
+  min-height:   $ui-height;
+  line-height:  $ui-height;
+
+  font-size: em(14);
+  font-family:      inherit;
+  text-decoration:  none;
+
+  @include appearance(none);
+
+  padding: 0 $spacing/2;
+
+  white-space: nowrap;
+  vertical-align: middle;
+}
+
+.label{
+	display: block;
+  font-weight: 600;
+  text-transform: uppercase;
+  margin-bottom: $spacing/4;
+  font-size: 0.875rem;
+}
+
+.note{
+  background: $mid-gray;
+  font-size: 0.825rem;
+  width: 250px;
+  padding: $spacing;
+  @include border-left-radius(2px);
+	@include border-right-radius(2px);
+  @include position(fixed, null null $spacing/2 $spacing/2);
+  z-index: 100;
+  a{
+    color: $blue;
+  }
+}

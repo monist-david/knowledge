@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    {% load static %}
+    <meta charset="UTF-8">
+    <link rel="stylesheet" href="{% static 'index/index.css' %}">
+    <script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script>
+    <title>Title</title>
+</head>
+<body>
+<div id="outerContainer">
+    <div id="container">
+        <div id="item">
+
+        </div>
+    </div>
+</div>
+
+<div style="text-align:center">
+    <h1>Round Dots / Circles</h1>
+    <span id="politics_node"></span>
+    <span id="health_node"></span>
+    <span id="science_node"></span>
+    <span id="sport_node"></span>
+    <span id="shopping_node"></span>
+    <span id="environment_node"></span>
+    <span id="business_node"></span>
+</div>
+
+
+<script src="{% static 'index/index.js' %}"></script>
+<script src="https://cdn.jsdelivr.net/npm/interactjs/dist/interact.min.js"></script>
+</body>
+</html>

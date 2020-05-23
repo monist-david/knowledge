@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Xinru</title>
+    {% load static %}
+    <link rel="stylesheet" href="{% static 'searching/results.css' %}"/>
+    <script
+        src="https://code.jquery.com/jquery-3.4.1.js"
+        integrity="sha256-WpOohJOqMqqyKL9FccASB9O0KwACQJpFTUBLTYOVvVU="
+        crossorigin="anonymous"></script>
+</head>
+<body>
+<p>This is what we have so far</p>
+{#{{ daily_news }}#}
+{#{% for new in News %}#}
+{#    <li>{{ new.title }}</li>#}
+{#    <li>{{ new.content }}</li>#}
+{#{% endfor %}#}
+<div class="tree well">
+    <ul>
+        <li>
+            <span><i class="icon-folder-open"></i> Parent</span> <a href="">Goes somewhere</a>
+            <ul>
+                <li>
+                    <span><i class="icon-minus-sign"></i> Child</span> <a href="">Goes somewhere</a>
+                    <ul>
+                        <li>
+                            <span><i class="icon-leaf"></i> Grand Child</span> <a href="">Goes somewhere</a>
+                        </li>
+                    </ul>
+                </li>
+                <li>
+                    <span><i class="icon-minus-sign"></i> Child</span> <a href="">Goes somewhere</a>
+                    <ul>
+                        <li>
+                            <span><i class="icon-leaf"></i> Grand Child</span> <a href="">Goes somewhere</a>
+                        </li>
+                        <li>
+                            <span><i class="icon-minus-sign"></i> Grand Child</span> <a href="">Goes somewhere</a>
+                            <ul>
+                                <li>
+                                    <span><i class="icon-minus-sign"></i> Great Grand Child</span> <a href="">Goes
+                                    somewhere</a>
+                                    <ul>
+                                        <li>
+                                            <span><i class="icon-leaf"></i> Great great Grand Child</span> <a href="">Goes
+                                            somewhere</a>
+                                        </li>
+                                        <li>
+                                            <span><i class="icon-leaf"></i> Great great Grand Child</span> <a href="">Goes
+                                            somewhere</a>
+                                        </li>
+                                    </ul>
+                                </li>
+                                <li>
+                                    <span><i class="icon-leaf"></i> Great Grand Child</span> <a href="">Goes
+                                    somewhere</a>
+                                </li>
+                                <li>
+                                    <span><i class="icon-leaf"></i> Great Grand Child</span> <a href="">Goes
+                                    somewhere</a>
+                                </li>
+                            </ul>
+                        </li>
+                        <li>
+                            <span><i class="icon-leaf"></i> Grand Child</span> <a href="">Goes somewhere</a>
+                        </li>
+                    </ul>
+                </li>
+            </ul>
+        </li>
+        <li>
+            <span><i class="icon-folder-open"></i> Parent2</span> <a href="">Goes somewhere</a>
+            <ul>
+                <li>
+                    <span><i class="icon-leaf"></i> Child</span> <a href="">Goes somewhere</a>
+                </li>
+            </ul>
+        </li>
+    </ul>
+</div>
+
+<!-- ************************* JS Files ************************* -->
+
+<script src="{% static 'searching/results.js' %}">
+</script>
+</body>
+</html>

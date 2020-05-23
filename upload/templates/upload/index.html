@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    {% load static %}
+    <meta charset="utf-8"/>
+    <title>Mini Ajax File Upload Form</title>
+
+    <!-- Google web fonts -->
+    <link href="http://fonts.googleapis.com/css?family=PT+Sans+Narrow:400,700" rel='stylesheet'/>
+
+    <!-- The main CSS file -->
+    <link href="{% static 'assets/css/style.css' %}" rel="stylesheet"/>
+</head>
+
+<body>
+
+{#<form id="upload" method="post" enctype="multipart/form-data">#}
+{#    {% csrf_token %}#}
+{#    <div id="drop">#}
+{#        Drop Here#}
+{##}
+{#        <a>Browse</a>#}
+{#        <input id="file_field" type="file" name="file_field" multiple/>#}
+{#    </div>#}
+{#    <ul>#}
+{#        <!-- The file uploads will be shown here -->#}
+{#    </ul>#}
+{##}
+{#</form>#}
+<form method="post">
+    {% csrf_token %}
+    <div class="form-group">
+        <textarea name="urls" cols="100" rows="50" required id="id_urls"></textarea>
+    </div>
+    <div class="input-field third-wrap">
+        <button class="btn-search" type="submit">Search</button>
+    </div>
+</form>
+
+<div id="tzine-actions">
+
+    <a id="tzine-download" href="http://tutorialzine.com/2013/05/mini-ajax-file-upload-form/"
+       title="Download This Example!">Start</a>
+</div>
+
+<!-- JavaScript Includes -->
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js"></script>
+<script src="{% static 'assets/js/jquery.knob.js' %}"></script>
+
+<!-- jQuery File Upload Dependencies -->
+<script src="{% static 'assets/js/jquery.ui.widget.js' %}"></script>
+<script src="{% static 'assets/js/jquery.iframe-transport.js' %}"></script>
+<script src="{% static 'assets/js/jquery.fileupload.js' %}"></script>
+
+<!-- Our main JS file -->
+<script src="{% static 'assets/js/script.js' %}"></script>
+
+
+<!-- Only used for the demos. Please ignore and remove. -->
+<script src="http://cdn.tutorialzine.com/misc/enhance/v1.js" async></script>
+
+</body>
+</html>

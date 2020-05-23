@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+    {% load static %}
+    <link rel="stylesheet" href="{% static 'analysis/analysis.scss' %}"/>
+</head>
+<body>
+
+{#<div id="wrapper">#}
+{##}
+{#    <form id="paper" method="post" action="">#}
+{#        {% csrf_token %}#}
+{#        <div id="margin">Title: <input id="title" type="text" name="title"></div>#}
+{#        <textarea placeholder="Enter something funny." id="text" name="text" rows="4"#}
+{#                  style="overflow: hidden; word-wrap: break-word; resize: none; height: 160px; "></textarea>#}
+{#        <br>#}
+{#        <input id="button" type="submit" value="Create">#}
+{##}
+{#    </form>#}
+{##}
+{#</div>#}
+
+<div class="container">
+    <div class="form form-stacked">
+        <div class="form-block">
+            <form id="paper" method="post" action="">
+                {% csrf_token %}
+                <textarea
+                        placeholder="Ask a programming question or share a tip with other developers. Markdown is supported."
+                        class="textarea-tall" name="article" cols="200" rows="60" id="id_article"></textarea>
+
+                <input id="button" type="submit" value="Create">#}
+            </form>
+        </div>
+    </div>
+    {{ summary }}
+</div>
+
+<script src="{% static 'analysis/analysis.coffee' %}">
+</script>
+</body>
+
+</html>

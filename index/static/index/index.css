@@ -1,0 +1,112 @@
+html, body {
+    margin: 5px;
+    padding: 0;
+}
+
+#container {
+    width: 100%;
+    height: 400px;
+    background-color: #333;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    border-radius: 7px;
+    touch-action: none;
+}
+
+#item {
+    width: 100px;
+    height: 100px;
+    background-color: rgb(245, 230, 99);
+    border: 10px solid rgba(136, 136, 136, .5);
+    border-radius: 50%;
+    touch-action: none;
+    user-select: none;
+}
+
+#item:active {
+    background-color: rgba(168, 218, 220, 1.00);
+}
+
+#item:hover {
+  cursor: pointer;
+  border-width: 20px;
+}
+
+body {
+    background-color: #30303d;
+    color: #fff;
+}
+
+#politics_node {
+    height: 25px;
+    width: 25px;
+    background-color: red;
+    border-radius: 50%;
+    display: inline-block;
+}
+
+#health_node {
+    height: 25px;
+    width: 25px;
+    background-color: green;
+    border-radius: 50%;
+    display: inline-block;
+}
+
+#science_node {
+    height: 25px;
+    width: 25px;
+    background-color: orange;
+    border-radius: 50%;
+    display: inline-block;
+}
+
+#sport_node {
+    height: 25px;
+    width: 25px;
+    background-color: black;
+    border-radius: 50%;
+    display: inline-block;
+}
+
+#shopping_node {
+    height: 25px;
+    width: 25px;
+    background-color: yellow;
+    border-radius: 50%;
+    display: inline-block;
+}
+
+#environment_node {
+    height: 25px;
+    width: 25px;
+    background-color: royalblue;
+    border-radius: 50%;
+    display: inline-block;
+}
+
+#female_node {
+    height: 25px;
+    width: 25px;
+    background-color: hotpink;
+    border-radius: 50%;
+    display: inline-block;
+}
+
+#male_node {
+    height: 25px;
+    width: 25px;
+    background-color: saddlebrown;
+    border-radius: 50%;
+    display: inline-block;
+}
+
+#business_node {
+    height: 25px;
+    width: 25px;
+    background-color: rebeccapurple;
+    border-radius: 50%;
+    display: inline-block;
+}

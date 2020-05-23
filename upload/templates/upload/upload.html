@@ -1,0 +1,71 @@
+<!--http://tutorialzine.com/2013/05/mini-ajax-file-upload-form/-->
+
+<!DOCTYPE html>
+<html>
+
+<head>
+    {% load static %}
+    <meta charset="utf-8"/>
+    <title>Mini Ajax File Upload Form</title>
+
+    <!-- Google web fonts -->
+    <link href="https://fonts.googleapis.com/css?family=PT+Sans+Narrow:400,700" rel='stylesheet'/>
+
+    <!-- The main CSS file -->
+    <link href="{% static 'upload/style.css' %}" rel="stylesheet"/>
+</head>
+
+<body>
+<form id="upload" method="post">
+    {% csrf_token %}
+    <div id="drop">
+                Drop Here
+
+        <a>Browse</a>
+        <input type="file" name="upl" multiple/>
+    </div>
+    <div class="inner-form">
+        <div class="input-field first-wrap">
+            <input id="search_keys" type="text" name="search_keys" maxlength="100"
+                   placeholder="What are you looking for?"
+                   required>
+        </div>
+        <div class="input-field first-wrap">
+            <input id="search_weight" type="text" name="search_weight" maxlength="100"
+                   placeholder="What are you looking for?"
+                   required>
+        </div>
+        <div class="input-field third-wrap">
+            <button class="btn-search" type="submit">Search</button>
+        </div>
+    </div>
+</form>
+
+<form id="upload" method="post" action="upload.php" enctype="multipart/form-data">
+    <div id="drop">
+        Drop Here
+
+        <a>Browse</a>
+        <input type="file" name="upl" multiple/>
+    </div>
+
+    <ul>
+        <!-- The file uploads will be shown here -->
+    </ul>
+
+</form>
+
+<!-- JavaScript Includes -->
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js"></script>
+<script src="assets/js/jquery.knob.js"></script>
+
+<!-- jQuery File Upload Dependencies -->
+<script src="assets/js/jquery.ui.widget.js"></script>
+<script src="assets/js/jquery.iframe-transport.js"></script>
+<script src="assets/js/jquery.fileupload.js"></script>
+
+<!-- Our main JS file -->
+<script src="assets/js/script.js"></script>
+
+</body>
+</html>
