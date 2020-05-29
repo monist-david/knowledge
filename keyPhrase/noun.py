@@ -338,12 +338,6 @@ def level_value_coo(arcs_list_copy, coo_index, to_coo_section, postags_list_copy
     value_list = mix_reset(value_list, words_list_copy, postags_list_copy)
     return value_list
 
-    # 插入词的时候进行排序
-def rearrange(list_of_list, index_value):
-    for l in list_of_list:
-        pass
-
-
 
 
 # level_1 = []
@@ -424,7 +418,7 @@ for sentence in [s_1, s_2, s_4, s_5, s_6, s_7, s_8, s_9]:
                     level_key.append([i])
                 if not find_element_list_of_list(root_index, level_key):
                     level_key.append([root_index])
-
+    level_key = sorted(level_key)
     find_root_rest_value = find_root_rest(whole_words_list, level_key, root_section)
     level_key = mix_reset(level_key, whole_words_list, whole_postags_list)
 
