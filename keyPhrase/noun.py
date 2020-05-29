@@ -242,6 +242,8 @@ def arc_sbv_vob_destination_is_root(postags_list_copy, arcs_list_copy, root_valu
         if arcs_list_copy[i].head == root_value + 1 and not postags_list_copy[i] == 'r':
             if arcs_list_copy[i].relation == "SBV":
                 result.append(i)
+            elif arcs_list_copy[i].relation == "FOB":
+                result.append(i)
     if not result:
         if last_sbv:
             result = last_sbv
@@ -349,8 +351,7 @@ level_relate = []
 
 knowledge_graph = {}
 update_last_sentence_sbv = ''
-for sentence in [s_1, s_2, s_4, s_5, s_6, s_7, s_8, s_9]:
-    knowledge_graph_temp = {}
+for sentence in [s_10, s_11, s_12, s_13, s_14]:
 
     whole_sent = sentence
     # 从一整个句子的角度来看
@@ -448,7 +449,7 @@ for sentence in [s_1, s_2, s_4, s_5, s_6, s_7, s_8, s_9]:
                     else:
                         print('work')
                         knowledge_graph[tuple(level_key)] = tuple(level_value_coo_copy)
-print(knowledge_graph)
+    print(knowledge_graph)
 
 #
 # level_value = []
