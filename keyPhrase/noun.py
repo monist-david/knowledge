@@ -31,6 +31,8 @@ from pyhanlp import *
 # sentences = SentenceSplitter.split(s_1)  # 分句
 # whole_sent = s_8
 sentences_list = []
+
+
 # for sent in sentences:
 #     for s in sent.split('，'):
 #         sentences_list.append(s)
@@ -168,7 +170,7 @@ def find_section(index_value, postags_list_copy):
         accumulate += 1
         if postags_list_copy[i] == 'wp':
             if index_value < accumulate:
-                end = i - 1
+                end = i
                 return start, end
             else:
                 start = i + 1
@@ -199,7 +201,9 @@ level_2 = []
 level_3 = []
 level_4 = []
 
-level_relate = {}
+level_relate = []
+
+knowledge_graph = {}
 
 # 分词
 cws_model_path = os.path.join(LTP_DATA_DIR, 'cws.model')
@@ -226,12 +230,7 @@ srl_model_path = os.path.join(LTP_DATA_DIR, 'pisrl_win.model')  # 语义角色�
 labeller = SementicRoleLabeller()  # 初始化实例
 labeller.load(srl_model_path)  # 加载模型
 
-
-
-
-
-
-for sentence in [s_9]:
+for sentence in [s_1, s_2, s_4, s_5, s_6, s_7, s_8, s_9]:
     whole_sent = sentence
     # 从一整个句子的角度来看
     # 分词
@@ -277,11 +276,11 @@ for sentence in [s_9]:
         root_sent += word
 
 
-    # 找到这一个COO最终是否能够对应到root，也就是arc.head 等于 0
-    def arc_coo_destination_is_root_sentence(arcs_list_copy, index_value, root_section_copy):
+    # 找到这一个COO最终是否能够对应到section，也就是arc.head 在该section的index之中
+    def arc_coo_destination_is_root_sentence(arcs_list_copy, index_value, section_copy):
         while True:
             if arcs_list_copy[index_value].relation == "COO":
-                if root_section_copy[0] < arcs_list_copy[index_value].head <= root_section_copy[1] + 1:
+                if section_copy[0] < arcs_list_copy[index_value].head <= section_copy[1] + 1:
                     return True
                 else:
                     index_value = arcs_list_copy[index_value].head - 1
@@ -308,27 +307,27 @@ for sentence in [s_9]:
                             result.append(i)
         return result
 
+
     # 找到对应root的状中结构的句子，也就是从ADV 到 POB 之间
     def arc_adv_destination_is_root(arcs_list_copy, root_value):
         result = []
         adv_start = False
-        temp_adv = -2
-
-
+        temp_adv = []
         for i in range(len(arcs_list_copy)):
             if arcs_list_copy[i].relation == "ADV" and arcs_list_copy[i].head == root_value + 1:
-                temp_adv = i
-                result.append(i)
+                temp_adv.append(i)
                 adv_start = True
-            elif arcs_list_copy[i].relation == "POB" and arcs_list_copy[i].head == temp_adv + 1:
-                result.append(i)
+            elif arcs_list_copy[i].relation == "POB" and arcs_list_copy[i].head == temp_adv[0] + 1:
+                temp_adv.append(i)
+                result.append(temp_adv)
                 adv_start = False
-                temp_adv = -2
-            elif i == root_value:
+                temp_adv = []
+            elif i == root_value and adv_start:
+                result.append(temp_adv)
                 adv_start = False
-                temp_adv = -2
+                temp_adv = []
             elif adv_start:
-                result.append(i)
+                temp_adv.append(i)
         return result
 
 
@@ -337,64 +336,26 @@ for sentence in [s_9]:
         result = []
         for i in range(len(words_list_copy)):
             if root_section_copy[0] <= i <= root_section[1]:
-                if not [i] in exist_value:
+                if not find_element_list_of_list(i, exist_value):
                     result.append(i)
         return result
+
 
     # 得到这个dict里面最后一个key里面的第一个词，如果dict是空的，那么return 一个空的list
     def find_last_dict(dict_copy):
         if dict_copy:
-            return list(dict_copy)[-1][0]
+            return list(dict_copy[-1])[-1][0]
         else:
             return []
 
 
-    level_key = []
-    level_value = []
-    special_sentence = ''
-    last_sentence_sbv = ''
-    result = arc_sbv_vob_destination_is_root(whole_postags_list, whole_arcs_list, root_index, find_last_dict(level_relate))
-    print(result)
-    another = arc_adv_destination_is_root(whole_arcs_list, root_index)
-    print('wrok')
-    print(another)
-    if type(result) == str:
-        last_sentence_sbv = result
-        result = []
-    level_key.append(result)
-    add_rest = False
-    for i in range(len(whole_arcs_list)):
-        if root_section[0] <= i <= root_section[1]:
-            if whole_arcs_list[i].relation == "COO":
-                if whole_arcs_list[i].head - 1 == root_index:
-                    level_key.append([i])
-                    level_key.append([root_index])
-        else:
-            if i > root_section[1] and not add_rest:
-                find_root_rest_value = find_root_rest(whole_words_list, level_key, root_section)
-                if find_root_rest_value:
-                    level_value.append(find_root_rest_value)
-                    add_rest = True
-            if whole_arcs_list[i].relation == "COO":
-                if arc_coo_destination_is_root_sentence(whole_arcs_list, i, root_section):
-                    current_section = find_section(i, whole_postags_list)
-                    temp = []
-                    for cs in range(current_section[0], current_section[1] + 1):
-                        if cs not in level_value:
-                            temp.append(cs)
-                    if not temp in level_value:
-                        level_value.append(temp)
-            elif whole_arcs_list[i].relation == "ADV" and \
-                    whole_arcs_list[i].head == root_index + 1:
-                current_section = find_section(i, whole_postags_list)
-                temp = []
-                for cs in range(current_section[0], current_section[1] + 1):
-                    temp.append(cs)
-                if not temp in level_value:
-                    level_key.append(temp)
+    # 这个方程的作用是确定这一个数字不在这个list of list里面，如果有，return True，没有，return False
+    def find_element_list_of_list(value, list_of_list):
+        for lol in list_of_list:
+            if value in lol:
+                return True
+        return False
 
-    # print(level_key)
-    # print(level_value)
 
     # 把一个同时含有数字和list的内容进行整理， 并且去除句子中词性为m或者c的词，结果是return所有的句子在一个list里面
     def mix_reset(mix_list, words_list_copy, postags_list_copy):
@@ -403,18 +364,76 @@ for sentence in [s_9]:
             sentence = ''
             for i in l:
                 if not postags_list_copy[i] == 'c':
-                    if not postags_list_copy[i] == 'm':
-                        sentence += words_list_copy[i]
+                    sentence += words_list_copy[i]
             if sentence:
                 result.append(sentence)
         return result
 
-    if last_sentence_sbv:
-        level_relate[tuple([last_sentence_sbv])] = tuple(
-            mix_reset(level_value, whole_words_list, whole_postags_list))
+
+    # 根据COO，形成level_value，对应现有的level_key，并且return 一个dict
+    def level_value_coo(level_value_copy, arcs_list_copy, coo_index, to_coo_section, postags_list_copy,
+                        words_list_copy):
+        value = []
+        update_section = []
+        value_list = []
+        if to_coo_section[0] <= arcs_list_copy[coo_index].head <= to_coo_section[1]:
+            value_list += level_value_copy
+            update_section = find_section(coo_index, postags_list_copy)
+            for us in range(update_section[0], update_section[1] + 1):
+                value.append(us)
+            value_list.append(value)
+        for i in range(coo_index + 1, len(arcs_list_copy)):
+            if arcs_list_copy[i].relation == "COO":
+                value = []
+                if update_section[0] <= arcs_list_copy[i].head - 1 <= update_section[1]:
+                    if not update_section[0] <= i <= update_section[1]:
+                        update_section = find_section(i, postags_list_copy)
+                        for us in range(update_section[0], update_section[1] + 1):
+                            value.append(us)
+                        value_list.append(value)
+        value_list = mix_reset(value_list, words_list_copy, postags_list_copy)
+        return value_list
+
+    level_key = []
+    level_value = []
+    special_sentence = ''
+    last_sentence_sbv = ''
+    result = arc_sbv_vob_destination_is_root(whole_postags_list, whole_arcs_list, root_index,
+                                             find_last_dict(level_relate))
+    if type(result) == str:
+        last_sentence_sbv = result
+        result = arc_adv_destination_is_root(whole_arcs_list, root_index)
     else:
-        level_relate[tuple(mix_reset(level_key, whole_words_list, whole_postags_list))] = tuple(
-            mix_reset(level_value, whole_words_list, whole_postags_list))
+        result = [result] + arc_adv_destination_is_root(whole_arcs_list, root_index)
+    print(result)
+    level_key = result
+    for i in range(root_section[0], root_section[1] + 1):
+        if whole_arcs_list[i].relation == "COO":
+            if whole_arcs_list[i].head - 1 == root_index:
+                if not find_element_list_of_list(i, level_key):
+                    level_key.append([i])
+                if not find_element_list_of_list(root_index, level_key):
+                    level_key.append([root_index])
+
+    find_root_rest_value = find_root_rest(whole_words_list, level_key, root_section)
+    level_value.append(find_root_rest_value)
+    level_key = mix_reset(level_key, whole_words_list, whole_postags_list)
+    knowledge_graph[tuple(level_key)] = []
+    for i in range(len(whole_arcs_list)):
+        if i > root_section[1] or i < root_section[0]:
+            if whole_arcs_list[i].relation == "COO":
+                level_value_coo_copy = level_value_coo(level_value, whole_arcs_list, i, root_section,
+                                                       whole_postags_list,
+                                                       whole_words_list)
+                if level_value_coo_copy:
+                    knowledge_graph[tuple(level_key)].append(tuple(level_value_coo_copy))
+    print(knowledge_graph)
+    # if last_sentence_sbv:
+    #     level_relate[tuple([last_sentence_sbv])] = tuple(
+    #         mix_reset(level_value, whole_words_list, whole_postags_list))
+    # else:
+    #     level_relate[tuple(mix_reset(level_key, whole_words_list, whole_postags_list))] = tuple(
+    #         mix_reset(level_value, whole_words_list, whole_postags_list))
 
     print('结果')
     print(level_relate)
