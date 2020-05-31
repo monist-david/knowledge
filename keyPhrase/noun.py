@@ -1,23 +1,3 @@
-s_1 = '去美国留学，选择一个适合自己的学校很重要，选择一个好的城市也同样重要'
-s_2 = '在大城市，学生不仅能增长见识，还能享受到大城市的便利，接触到不一样的社会层面'
-s_4 = '旧金山湾区是世界最重要的科教文化中心之一，' \
-      '坐拥斯坦福大学和加州大学伯克利分校两大世界知名高校，' \
-      '以及世界顶级医学中心加州大学旧金山分校，在众多兄弟城市中独占鳌头'
-s_5 = '旧金山更是高科技产业的天堂，由于临近世界著名高新技术产业区硅谷，而且在旧金山求学的学子也备受雇主青睐'
-s_6 = '此外，旧金山也是一座气候宜人的海港城市，多民族、种族融合在一起，每个月都有独具特色的文化节日'
-s_7 = '波士顿是美国东北部高等教育和医疗保健的中心，是全美人口受教育程度最高的城市'
-s_8 = '拥有塔夫斯大学、波士顿学院、波士顿大学、布兰迪斯大学和东北大学等全美名校，可能大街上与你擦肩而过的就是各校的精英'
-s_9 = '波士顿在经济、文化及娱乐产业上也是声名赫赫，可以说波士顿是一座全面发展、综合实力非常强的城市'
-s_10 = '西雅图被誉为新的科技热潮中心，在航天、计算机软件、生物信息科学、基因科学、远程医疗、电子设备、医疗设备、' \
-       '环境工程等先进技术处于领导地位'
-s_11 = '西雅图是一个表演艺术的中心。西雅图交响乐团有上百年的历史，是世界上出版唱片最多的交响乐团之一；' \
-       '西雅图在流行音乐和现代音乐方面也非常多样和活跃'
-s_12 = '奥斯汀不仅仅是政治中心，也是教育中心，更是音乐、户外活动和文化活动聚集的地方'
-s_13 = '此外，奥斯汀的科技也很发达，被誉为“硅山”（SiliconHill），是Freescale半导体公司、戴尔公司总部所在地' \
-       '此外，IBM、苹果、谷歌、英特尔、思科、3M、eBay等也在当地设有分部'
-s_14 = '盐湖城都市区是美国重要的金融中心、商业中心以及度假胜地之一，是诸多其他观光小镇及国家公园的入口，' \
-       '包括犹他公园城、Snowbird滑雪度假村及拱门国家公园'
-
 LTP_DATA_DIR = 'C:/Users/david/Desktop/site/django site/knowledge/ltp_data_v3.4.0'
 from pyltp import SentenceSplitter
 from pyltp import Segmentor
@@ -233,25 +213,40 @@ def arc_coo_destination_is_root_sentence(arcs_list_copy, index_value, section_co
             return False
 
 
+# 如果找到了sbv，看看这个sbv前面有没有ATT，如果有并且这个ATT是对应他的，那么连着att一起选
+def att_before_main(arcs_list_copy, main_index):
+    result = []
+    if main_index != 0:
+        if arcs_list_copy[main_index - 1].head == main_index + 1 and arcs_list_copy[main_index - 1].relation == "ATT":
+            result.append(main_index - 1)
+        result.append(main_index)
+    else:
+        result.append(main_index)
+    return result
+
+
 # 找到这个root单句中是否有主谓关系，或者动宾关系，如果有，得出主语或者宾语，如果没有则得出[]
 # 这里注意主谓关系比动宾关系更重要，如果有了主语，那么不考虑宾语
 # last_sbv 这里指的是上一句话含有的主语，如果没有上一句话，则last_sbv 为 []
+# 如果有两个或更多sbv 都对应着root，那么他们中间所有的内容都作为主语
+# 如果找到了sbv，看看这个sbv前面有没有ATT，如果有并且这个ATT是对应他的，那么连着att一起选
 def arc_sbv_vob_destination_is_root(postags_list_copy, arcs_list_copy, root_value, last_sbv):
     result = []
     for i in range(len(arcs_list_copy)):
         if arcs_list_copy[i].head == root_value + 1 and not postags_list_copy[i] == 'r':
             if arcs_list_copy[i].relation == "SBV":
-                result.append(i)
+                result += att_before_main(arcs_list_copy, i)
             elif arcs_list_copy[i].relation == "FOB":
-                result.append(i)
+                result += att_before_main(arcs_list_copy, i)
     if not result:
         if last_sbv:
             result = last_sbv
         else:
-            for i in range(root_section[0], root_section[1]):
+            print(root_section)
+            for i in range(root_section[0], root_section[1] + 1):
                 if arcs_list_copy[i].head == root_value + 1 and not postags_list_copy[i] == 'r':
                     if arcs_list_copy[i].relation == "VOB":
-                        result.append(i)
+                        result += att_before_main(arcs_list_copy, i)
     return result
 
 
@@ -270,6 +265,8 @@ def arc_adv_destination_is_root(arcs_list_copy, root_value):
                 result.append(temp_adv)
                 adv_start = False
                 temp_adv = []
+            else:
+                temp_adv.append(i)
         elif adv_start:
             temp_adv.append(i)
     return result
@@ -341,6 +338,94 @@ def level_value_coo(arcs_list_copy, coo_index, to_coo_section, postags_list_copy
     return value_list
 
 
+s_1 = '去美国留学，选择一个适合自己的学校很重要，选择一个好的城市也同样重要'
+s_2 = '在大城市，学生不仅能增长见识，还能享受到大城市的便利，接触到不一样的社会层面'
+s_4 = '旧金山湾区是世界最重要的科教文化中心之一，' \
+      '坐拥斯坦福大学和加州大学伯克利分校两大世界知名高校，' \
+      '以及世界顶级医学中心加州大学旧金山分校，在众多兄弟城市中独占鳌头'
+s_5 = '旧金山更是高科技产业的天堂，由于临近世界著名高新技术产业区硅谷，而且在旧金山求学的学子也备受雇主青睐'
+s_6 = '此外，旧金山也是一座气候宜人的海港城市，多民族、种族融合在一起，每个月都有独具特色的文化节日'
+s_7 = '波士顿是美国东北部高等教育和医疗保健的中心，是全美人口受教育程度最高的城市'
+s_8 = '拥有塔夫斯大学、波士顿学院、波士顿大学、布兰迪斯大学和东北大学等全美名校，可能大街上与你擦肩而过的就是各校的精英'
+s_9 = '波士顿在经济、文化及娱乐产业上也是声名赫赫，可以说波士顿是一座全面发展、综合实力非常强的城市'
+s_10 = '西雅图被誉为新的科技热潮中心，在航天、计算机软件、生物信息科学、基因科学、远程医疗、电子设备、医疗设备、' \
+       '环境工程等先进技术处于领导地位'
+s_11 = '西雅图是一个表演艺术的中心。西雅图交响乐团有上百年的历史，是世界上出版唱片最多的交响乐团之一；' \
+       '西雅图在流行音乐和现代音乐方面也非常多样和活跃'
+s_12 = '奥斯汀不仅仅是政治中心，也是教育中心，更是音乐、户外活动和文化活动聚集的地方'
+s_13 = '此外，奥斯汀的科技也很发达，被誉为“硅山”（SiliconHill），是Freescale半导体公司、戴尔公司总部所在地' \
+       '此外，IBM、苹果、谷歌、英特尔、思科、3M、eBay等也在当地设有分部'
+s_14 = '盐湖城都市区是美国重要的金融中心、商业中心以及度假胜地之一，是诸多其他观光小镇及国家公园的入口，' \
+       '包括犹他公园城、Snowbird滑雪度假村及拱门国家公园'
+
+s_3 = '影响石油价格的供给因素'
+s_15 = '从影响油价长期走势的供给因素和需求因素以及对油价造成冲击的短期因素三个方面对影响油价的因素进行分析'
+s_16 = '影响石油价格的供给因素主要包括世界石油储量，石油供给结构以及石油生产成本'
+s_17 = '石油产量必须以石油储量为基础'
+s_18 = '过去的几十年中，世界石油资源探明的储量一直在持续增加，2005年底世界石油资源探明可采储量约为12007亿桶，' \
+       '20年间增加了4303亿桶，增长了55.8%'
+s_19 = '虽然产量的增长速度大于已探明储量的增长速度，但2005年底全球石油储量与产量之间的比例为40.6年，' \
+       '可以预见，至少在未来10年不会出现全球范围内的石油供给短缺现象'
+s_20 = '但是，由于石油资源的不可再生性，国际能源机构（iea）预测世界石油产量将在2015年以前达到顶峰，' \
+       '全球石油供给逐步进入滑坡阶段'
+s_21 = '世界石油市场的供给特点也对石油供给具有重大影响'
+s_22 = '目前世界石油市场的供给方主要包括石油输出国组织（opec）和非opec国家。opec拥有世界上绝大部份探明石油储量，' \
+       '其产量和价格政策对世界石油供给和价格具有重大影响'
+s_23 = '而非opec国家主要是作为价格接受者存在，根据价格调整产量'
+s_24 = '但2002年以来，受强劲的世界石油需求和高油价刺激，opec产量激增，' \
+       '原油剩余产能从2002年的560万桶/日急剧下降到2006年的140万桶/日左右，产能利用率高于90％，通过增加产量平抑油价的能力减弱'
+s_25 = '迫使市场参与者通过构建商业库存作为应对风险的缓冲，而库存需求反过来又刺激油价上行'
+s_26 = '美欧跨国石油公司在世纪之交通过资本运作发起的新一轮兼并联合使得世界石化产业的集中度越来越高'
+s_27 = '随着石化巨头对全球石油资源、技术和市场的控制力的进一步增强，世界石化产业的发展和竞争以及石油价格的波动带来了深刻影响'
+s_28 = '此外，石油生产成本也将对石油供给产生影响'
+s_29 = '石油作为一种不可再生能源，其生产成本会影响生产者跨时期的产量配置决策，进而影响到市场供给量，间接地引起石油价格波动'
+s_30 = '世界石油价格的下限一般主要由高成本地区的石油生产决定，而低成本地区的石油决定了价格的波动幅度'
+s_31 = '石油需求主要由世界经济发展水平及经济结构变化，替代能源的发展和节能技术的应用决定'
+s_32 = '影响石油价格的需求因素'
+s_33 = '石油需求主要由世界经济发展水平及经济结构变化，替代能源的发展和节能技术的应用决定'
+s_34 = '全球石油消费与全球经济增长速度明显正相关'
+s_35 = '全球经济增长或超预期增长都会牵动国际原油市场价格出现上涨'
+s_36 = '以中国、印度为代表的发展中国家经济强劲增长也使得对原油的需求急剧增加，导致世界原油价格震荡走高'
+s_37 = '其中中国对石油的需求带动了全球石油消费增长的1/3'
+s_38 = '而反过来，异常高的油价势必会阻碍世界经济的发展，全球经济增长速度放缓又会影响石油需求的增加'
+s_39 = '替代能源的成本将决定石油价格的上限'
+s_40 = '当石油价格高于替代能源成本时，消费者将倾向于使用替代能源'
+s_41 = '而节能将使世界石油市场的供需矛盾趋于缓和'
+s_42 = '目前各国都在大力发展可再生能源和节能技术，这势必将对石油价格的长期走势产生影响'
+s_43 = '影响石油价格的短期因素'
+s_44 = '短期影响因素是通过对供求关系造成冲击或短期内改变人们对供求关系的预期而对石油价格发挥作用的'
+s_45 = '突发的重大政治事件'
+s_46 = '石油除了一般商品属性外，还具有战略物资的属性，其价格和供应很大程度上受政治势力和政治局势的影响'
+s_47 = '近年来，随着政治多极化、经济全球化、生产国际化的发展，争夺石油资源和控制石油市场，已成为油市动荡和油价飙涨的重要原因'
+s_48 = '石油库存变化'
+s_49 = '库存是供给和需求之间的一个缓冲，对稳定油价有积极作用'
+s_50 = 'ecd的库存水平已经成为国际油价的指示器，并且商业库存对石油价格的影响要明显强于常规库存'
+s_51 = '当期货价格远高于现货价格时，石油公司倾向于增加商业库存，刺激现货价格上涨，' \
+       '期货现货价差减小；当期货价格低于现货价格时，石油公司倾向于减少商业库存，现货价格下降，与期货价格形成合理价差'
+s_52 = 'opec和国际能源署（iea）的市场干预'
+s_53 = 'opec控制着全球剩余石油产能的绝大部分，iea则拥有大量的石油储备，他们能在短时期内改变市场供求格局，' \
+       '从而改变人们对石油价格走势的预期'
+s_54 = 'opec的主要政策是限产保价和降价保产'
+s_55 = 'iea的26个成员国共同控制着大量石油库存以应付紧急情况'
+s_56 = '国际资本市场资金的短期流向'
+s_57 = '20世纪90年代以来，国际石油市场的特征是期货市场的影响显著增强，目前已经形成了由期货市场向现货市场传导的价格形成机制'
+s_58 = '尽管国际原油市场的投机活动不是油价上涨的诱发因素，但由于全球金融市场投资机会缺乏，' \
+       '大量资金进入国际商品市场，尤其是原油市场，不可避免地推高了国际油价，并使其严重偏离基本面'
+s_59 = '汇率变动'
+s_60 = '相关研究表明，石油价格变动和美元与国际主要货币之间的汇率变动存在弱相关关系'
+s_61 = '由于美元持续贬值，以美元标价的石油产品的实际收入下降，导致石油输出国组织以维持原油高价作为应对措施'
+s_62 = '异常气候'
+s_63 = '欧美许多国家用石油作为取暖的燃料，因此，当气候变化异常时，会引起燃料油需求的短期变动，从而带动原油和其他油品的价格变化'
+s_64 = '另外，异常的天气可能会对石油生产设施造成破坏，导致供给中断，从而影响油价'
+s_65 = '利率变动'
+s_66 = '在标准不可再生资源模型中，利率的上升会导致未来开采价值相对现在开采价值减少，因此会使得开采路径凸向现在而远离未来'
+s_67 = '高利率会减少资本投资，导致较小的初始开采规模；高利率也会提高替代技术的资本成本，导致开采速度下降'
+s_68 = '税收政策'
+s_69 = '政府干预会使得市场消耗曲线凸向现在或未来'
+s_70 = '跨时期石油开采模式的税收效应依赖于税收随时间变化的现值'
+s_71 = '例如，税收现值随时间减少会改变开采顺序的决策'
+s_72 = '和不征税相比，税收最终还是会减少任意时点上的净收益，也就减少了相应时期开采的积极性'
+s_73 = '而且税收会降低新发现储量的投资回报'
 
 # level_1 = []
 # level_2 = []
@@ -351,7 +436,7 @@ level_relate = []
 
 knowledge_graph = {}
 update_last_sentence_sbv = ''
-for sentence in [s_10, s_11, s_12, s_13, s_14]:
+for sentence in [s_1, s_2, s_4, s_5, s_6, s_7]:
 
     whole_sent = sentence
     # 从一整个句子的角度来看
@@ -379,9 +464,9 @@ for sentence in [s_10, s_11, s_12, s_13, s_14]:
     print(whole_postags_list)
     print(whole_netags_list)
     print("\t".join("%d:%s" % (arc.head, arc.relation) for arc in whole_arcs_list))
-    # for role in whole_roles:
-    #     print(role.index, "".join(
-    #         ["%s:(%d,%d)" % (arg.name, arg.range.start, arg.range.end) for arg in role.arguments]))
+    for role in whole_roles:
+        print(role.index, "".join(
+            ["%s:(%d,%d)" % (arg.name, arg.range.start, arg.range.end) for arg in role.arguments]))
 
     # 找到一个整句中的root所在的位置，根据依存句法分析的数据来找
     root_index = 0
@@ -405,12 +490,16 @@ for sentence in [s_10, s_11, s_12, s_13, s_14]:
     find_root_rest_value = []
     result = arc_sbv_vob_destination_is_root(whole_postags_list, whole_arcs_list, root_index,
                                              update_last_sentence_sbv)
+    print(result)
     if result == update_last_sentence_sbv:
-        last_sentence_sbv = update_last_sentence_sbv
         result = arc_adv_destination_is_root(whole_arcs_list, root_index)
+        if result:
+            result = arc_adv_destination_is_root(whole_arcs_list, root_index)
+        else:
+            last_sentence_sbv = update_last_sentence_sbv
     else:
         result = [result] + arc_adv_destination_is_root(whole_arcs_list, root_index)
-        level_key = result
+    level_key = result
     for i in range(root_section[0], root_section[1] + 1):
         if whole_arcs_list[i].relation == "COO":
             if whole_arcs_list[i].head - 1 == root_index:
@@ -423,19 +512,23 @@ for sentence in [s_10, s_11, s_12, s_13, s_14]:
         level_key = sorted(level_key)
         find_root_rest_value = find_root_rest(whole_words_list, level_key, root_section)
         level_key = mix_reset(level_key, whole_words_list)
-        knowledge_graph[tuple(level_key)] = []
     else:
         find_root_rest_value = find_root_rest(whole_words_list, level_key, root_section)
+        level_key = mix_reset(level_key, whole_words_list)
         level_key += last_sentence_sbv
+
     update_last_sentence_sbv = level_key
 
     # ----------------------------------------------------------------------------------------------------------------
     # 从这里开始 value 的部分
     level_value.append(find_root_rest_value)
 
-    # 首先level_key 剩下的部分单独组成value其中的一个部分，如果是一个标点符号则跳过
-    if not whole_postags_list[level_value[0][0]] == "wp":
-        knowledge_graph[tuple(level_key)].append(tuple(mix_reset(level_value, whole_words_list)))
+    try:
+        # 首先level_key 剩下的部分单独组成value其中的一个部分，如果是一个标点符号则跳过
+        if not whole_postags_list[level_value[0][0]] == "wp":
+            knowledge_graph[tuple(level_key)].append(tuple(mix_reset(level_value, whole_words_list)))
+    except:
+        knowledge_graph[tuple(level_key)] = [tuple(mix_reset(level_value, whole_words_list))]
 
     for i in range(len(whole_arcs_list)):
         if i > root_section[1] or i < root_section[0]:
@@ -447,9 +540,9 @@ for sentence in [s_10, s_11, s_12, s_13, s_14]:
                     if tuple(level_key) in knowledge_graph:
                         knowledge_graph[tuple(level_key)].append(tuple(level_value_coo_copy))
                     else:
-                        print('work')
                         knowledge_graph[tuple(level_key)] = tuple(level_value_coo_copy)
-    print(knowledge_graph)
+    print(level_key)
+    print(knowledge_graph[tuple(level_key)])
 
 #
 # level_value = []
