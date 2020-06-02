@@ -338,7 +338,8 @@ def level_value_coo(arcs_list_copy, coo_index, to_coo_section, postags_list_copy
     return value_list
 
 
-s_1 = '去美国留学，选择一个适合自己的学校很重要，选择一个好的城市也同样重要'
+# s_1 = '去美国留学，选择一个适合自己的学校很重要，选择一个好的城市也同样重要'
+s_1 = '去，选择一个适合自己的学校很重要，选择一个好的城市也同样重要'
 s_2 = '在大城市，学生不仅能增长见识，还能享受到大城市的便利，接触到不一样的社会层面'
 s_4 = '旧金山湾区是世界最重要的科教文化中心之一，' \
       '坐拥斯坦福大学和加州大学伯克利分校两大世界知名高校，' \
@@ -436,7 +437,7 @@ level_relate = []
 
 knowledge_graph = {}
 update_last_sentence_sbv = ''
-for sentence in [s_1, s_2, s_4, s_5, s_6, s_7]:
+for sentence in [s_1, s_2, s_4, s_5, s_6, s_7, s_8, s_9, s_10, s_11, s_12, s_13, s_14]:
 
     whole_sent = sentence
     # 从一整个句子的角度来看
