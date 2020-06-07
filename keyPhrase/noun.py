@@ -8,6 +8,8 @@ from pyltp import SementicRoleLabeller
 import copy
 from pyhanlp import *
 
+
+
 # sentences = SentenceSplitter.split(s_1)  # 分句
 # whole_sent = s_8
 sentences_list = []
@@ -165,6 +167,8 @@ def find_root(arcs_list_copy):
             return position
 
 
+
+special_chacter = ['、', '”', '“', '（', '）', '{', '}', '【', '】']
 # 找到某个index所在的分句，这里按照postags_list 里面的wp（标点符号）来分， 并且return那个句子在整句中的index[start:end]
 # 注意 "、" 这个不属于考虑的标点符号
 def find_section(index_value, postags_list_copy, words_list_copy):
@@ -173,7 +177,7 @@ def find_section(index_value, postags_list_copy, words_list_copy):
     accumulate = 0
     for i in range(len(postags_list_copy)):
         accumulate += 1
-        if postags_list_copy[i] == 'wp' and words_list_copy[i] != "、":
+        if postags_list_copy[i] == 'wp' and not words_list_copy[i] in special_chacter:
             if index_value < accumulate:
                 end = i
                 return start, end
@@ -213,16 +217,43 @@ def arc_coo_destination_is_root_sentence(arcs_list_copy, index_value, section_co
             return False
 
 
+# # 如果找到了sbv，看看这个sbv前面有没有ATT，如果有并且这个ATT是对应他的，那么连着att一起选
+# def att_before_main(arcs_list_copy, main_index):
+#     result = []
+#     if main_index != 0:
+#         if arcs_list_copy[main_index - 1].head == main_index + 1:
+#             if arcs_list_copy[main_index - 1].relation == "ATT":
+#             result.append(main_index - 1)
+#         result.append(main_index)
+#     else:
+#         result.append(main_index)
+#     return result
+
 # 如果找到了sbv，看看这个sbv前面有没有ATT，如果有并且这个ATT是对应他的，那么连着att一起选
 def att_before_main(arcs_list_copy, main_index):
-    result = []
-    if main_index != 0:
-        if arcs_list_copy[main_index - 1].head == main_index + 1 and arcs_list_copy[main_index - 1].relation == "ATT":
-            result.append(main_index - 1)
-        result.append(main_index)
-    else:
-        result.append(main_index)
-    return result
+    result = [main_index]
+    temp_result = []
+    status = True
+    while status:
+        if main_index != 0:
+            if arcs_list_copy[main_index - 1].head - 1 in result:
+                if arcs_list_copy[main_index - 1].relation == "ATT":
+                    result.append(main_index - 1)
+                    if temp_result:
+                        result += temp_result
+                    temp_result = []
+                elif arcs_list_copy[main_index - 1].relation == "LAD":
+                    result.append(main_index - 1)
+                else:
+                    status = False
+            elif arcs_list_copy[main_index - 1].relation == "RAD":
+                temp_result.append(main_index - 1)
+            else:
+                status = False
+            main_index -= 1
+        else:
+            status = False
+    return sorted(result)
 
 
 # 找到这个root单句中是否有主谓关系，或者动宾关系，如果有，得出主语或者宾语，如果没有则得出[]
@@ -242,7 +273,6 @@ def arc_sbv_vob_destination_is_root(postags_list_copy, arcs_list_copy, root_valu
         if last_sbv:
             result = last_sbv
         else:
-            print(root_section)
             for i in range(root_section[0], root_section[1] + 1):
                 if arcs_list_copy[i].head == root_value + 1 and not postags_list_copy[i] == 'r':
                     if arcs_list_copy[i].relation == "VOB":
@@ -251,24 +281,26 @@ def arc_sbv_vob_destination_is_root(postags_list_copy, arcs_list_copy, root_valu
 
 
 # 找到对应root的状中结构的句子，也就是从ADV 到 POB 之间
-def arc_adv_destination_is_root(arcs_list_copy, root_value):
+# 但如果这个部分正好在root的句子里,  则不予考虑
+def arc_adv_destination_is_root(arcs_list_copy, root_value, root_section_copy):
     result = []
     adv_start = False
     temp_adv = []
     for i in range(len(arcs_list_copy)):
-        if arcs_list_copy[i].relation == "ADV" and arcs_list_copy[i].head == root_value + 1:
-            temp_adv.append(i)
-            adv_start = True
-        elif arcs_list_copy[i].relation == "POB" and temp_adv:
-            if arcs_list_copy[i].head == temp_adv[0] + 1:
+        if i < root_section_copy[0] or i > root_section_copy[1]:
+            if arcs_list_copy[i].relation == "ADV" and arcs_list_copy[i].head == root_value + 1:
                 temp_adv.append(i)
-                result.append(temp_adv)
-                adv_start = False
-                temp_adv = []
-            else:
+                adv_start = True
+            elif arcs_list_copy[i].relation == "POB" and temp_adv:
+                if arcs_list_copy[i].head == temp_adv[0] + 1:
+                    temp_adv.append(i)
+                    result.append(temp_adv)
+                    adv_start = False
+                    temp_adv = []
+                else:
+                    temp_adv.append(i)
+            elif adv_start:
                 temp_adv.append(i)
-        elif adv_start:
-            temp_adv.append(i)
     return result
 
 
@@ -338,8 +370,19 @@ def level_value_coo(arcs_list_copy, coo_index, to_coo_section, postags_list_copy
     return value_list
 
 
-# s_1 = '去美国留学，选择一个适合自己的学校很重要，选择一个好的城市也同样重要'
-s_1 = '去，选择一个适合自己的学校很重要，选择一个好的城市也同样重要'
+# 根据COO，形成level_value，对应现有的level_key，并且return 一个dict
+def find_rest_sentence(words_list_copy, existed_index):
+    result = []
+    for i in range(len(words_list_copy)):
+        in_list = False
+        for value in existed_index:
+            if i in value:
+                in_list = True
+        if not in_list:
+            result.append(i)
+    return result
+
+s_1 = '去美国留学，选择一个适合自己的学校很重要，选择一个好的城市也同样重要'
 s_2 = '在大城市，学生不仅能增长见识，还能享受到大城市的便利，接触到不一样的社会层面'
 s_4 = '旧金山湾区是世界最重要的科教文化中心之一，' \
       '坐拥斯坦福大学和加州大学伯克利分校两大世界知名高校，' \
@@ -355,7 +398,7 @@ s_11 = '西雅图是一个表演艺术的中心。西雅图交响乐团有上百
        '西雅图在流行音乐和现代音乐方面也非常多样和活跃'
 s_12 = '奥斯汀不仅仅是政治中心，也是教育中心，更是音乐、户外活动和文化活动聚集的地方'
 s_13 = '此外，奥斯汀的科技也很发达，被誉为“硅山”（SiliconHill），是Freescale半导体公司、戴尔公司总部所在地' \
-       '此外，IBM、苹果、谷歌、英特尔、思科、3M、eBay等也在当地设有分部'
+       '，此外，IBM、苹果、谷歌、英特尔、思科、3M、eBay等也在当地设有分部'
 s_14 = '盐湖城都市区是美国重要的金融中心、商业中心以及度假胜地之一，是诸多其他观光小镇及国家公园的入口，' \
        '包括犹他公园城、Snowbird滑雪度假村及拱门国家公园'
 
@@ -465,9 +508,9 @@ for sentence in [s_1, s_2, s_4, s_5, s_6, s_7, s_8, s_9, s_10, s_11, s_12, s_13,
     print(whole_postags_list)
     print(whole_netags_list)
     print("\t".join("%d:%s" % (arc.head, arc.relation) for arc in whole_arcs_list))
-    for role in whole_roles:
-        print(role.index, "".join(
-            ["%s:(%d,%d)" % (arg.name, arg.range.start, arg.range.end) for arg in role.arguments]))
+    # for role in whole_roles:
+    #     print(role.index, "".join(
+    #         ["%s:(%d,%d)" % (arg.name, arg.range.start, arg.range.end) for arg in role.arguments]))
 
     # 找到一个整句中的root所在的位置，根据依存句法分析的数据来找
     root_index = 0
@@ -489,17 +532,17 @@ for sentence in [s_1, s_2, s_4, s_5, s_6, s_7, s_8, s_9, s_10, s_11, s_12, s_13,
     level_value = []
     last_sentence_sbv = ''
     find_root_rest_value = []
+    find_rest_sentence_value = []
     result = arc_sbv_vob_destination_is_root(whole_postags_list, whole_arcs_list, root_index,
                                              update_last_sentence_sbv)
-    print(result)
     if result == update_last_sentence_sbv:
-        result = arc_adv_destination_is_root(whole_arcs_list, root_index)
+        result = arc_adv_destination_is_root(whole_arcs_list, root_index, root_section)
         if result:
-            result = arc_adv_destination_is_root(whole_arcs_list, root_index)
+            result = arc_adv_destination_is_root(whole_arcs_list, root_index, root_section)
         else:
             last_sentence_sbv = update_last_sentence_sbv
     else:
-        result = [result] + arc_adv_destination_is_root(whole_arcs_list, root_index)
+        result = [result] + arc_adv_destination_is_root(whole_arcs_list, root_index, root_section)
     level_key = result
     for i in range(root_section[0], root_section[1] + 1):
         if whole_arcs_list[i].relation == "COO":
@@ -511,10 +554,12 @@ for sentence in [s_1, s_2, s_4, s_5, s_6, s_7, s_8, s_9, s_10, s_11, s_12, s_13,
 
     if not last_sentence_sbv:
         level_key = sorted(level_key)
-        find_root_rest_value = find_root_rest(whole_words_list, level_key, root_section)
+        # find_root_rest_value = find_root_rest(whole_words_list, level_key, root_section)
+        find_rest_sentence_value = find_rest_sentence(whole_words_list, level_key)
         level_key = mix_reset(level_key, whole_words_list)
     else:
-        find_root_rest_value = find_root_rest(whole_words_list, level_key, root_section)
+        # find_root_rest_value = find_root_rest(whole_words_list, level_key, root_section)
+        find_rest_sentence_value = find_rest_sentence(whole_words_list, level_key)
         level_key = mix_reset(level_key, whole_words_list)
         level_key += last_sentence_sbv
 
@@ -522,26 +567,35 @@ for sentence in [s_1, s_2, s_4, s_5, s_6, s_7, s_8, s_9, s_10, s_11, s_12, s_13,
 
     # ----------------------------------------------------------------------------------------------------------------
     # 从这里开始 value 的部分
-    level_value.append(find_root_rest_value)
+    # level_value.append(find_root_rest_value)
+    level_value.append(find_rest_sentence_value)
 
+    # level_key 剩下的部分组成value, 如果是一个标点符号则跳过第一个标点符号
+    if whole_postags_list[level_value[0][0]] == "wp":
+        level_value[0].remove(level_value[0][0])
     try:
-        # 首先level_key 剩下的部分单独组成value其中的一个部分，如果是一个标点符号则跳过
-        if not whole_postags_list[level_value[0][0]] == "wp":
-            knowledge_graph[tuple(level_key)].append(tuple(mix_reset(level_value, whole_words_list)))
+        knowledge_graph[tuple(level_key)].append(tuple(mix_reset(level_value, whole_words_list)))
     except:
         knowledge_graph[tuple(level_key)] = [tuple(mix_reset(level_value, whole_words_list))]
 
-    for i in range(len(whole_arcs_list)):
-        if i > root_section[1] or i < root_section[0]:
-            if whole_arcs_list[i].relation == "COO":
-                level_value_coo_copy = level_value_coo(whole_arcs_list, i, root_section,
-                                                       whole_postags_list,
-                                                       whole_words_list)
-                if level_value_coo_copy:
-                    if tuple(level_key) in knowledge_graph:
-                        knowledge_graph[tuple(level_key)].append(tuple(level_value_coo_copy))
-                    else:
-                        knowledge_graph[tuple(level_key)] = tuple(level_value_coo_copy)
+    # try:
+    #     # 首先level_key 剩下的部分单独组成value其中的一个部分，如果是一个标点符号则跳过
+    #     if not whole_postags_list[level_value[0][0]] == "wp":
+    #         knowledge_graph[tuple(level_key)].append(tuple(mix_reset(level_value, whole_words_list)))
+    # except:
+    #     knowledge_graph[tuple(level_key)] = [tuple(mix_reset(level_value, whole_words_list))]
+    #
+    # for i in range(len(whole_arcs_list)):
+    #     if i > root_section[1] or i < root_section[0]:
+    #         if whole_arcs_list[i].relation == "COO":
+    #             level_value_coo_copy = level_value_coo(whole_arcs_list, i, root_section,
+    #                                                    whole_postags_list,
+    #                                                    whole_words_list)
+    #             if level_value_coo_copy:
+    #                 if tuple(level_key) in knowledge_graph:
+    #                     knowledge_graph[tuple(level_key)].append(tuple(level_value_coo_copy))
+    #                 else:
+    #                     knowledge_graph[tuple(level_key)] = tuple(level_value_coo_copy)
     print(level_key)
     print(knowledge_graph[tuple(level_key)])
 
