@@ -1,4 +1,3 @@
-LTP_DATA_DIR = 'C:/Users/david/Desktop/site/django site/knowledge/ltp_data_v3.4.0'
 from pyltp import SentenceSplitter
 from pyltp import Segmentor
 from pyltp import Postagger
@@ -7,6 +6,8 @@ from pyltp import Parser
 from pyltp import SementicRoleLabeller
 import copy
 from pyhanlp import *
+import settings
+LTP_DATA_DIR = settings.LTP_DATA_DIR
 
 
 
