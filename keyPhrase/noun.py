@@ -8,8 +8,6 @@ from pyltp import SementicRoleLabeller
 import copy
 from pyhanlp import *
 
-
-
 # sentences = SentenceSplitter.split(s_1)  # 分句
 # whole_sent = s_8
 sentences_list = []
@@ -167,8 +165,9 @@ def find_root(arcs_list_copy):
             return position
 
 
-
 special_chacter = ['、', '”', '“', '（', '）', '{', '}', '【', '】']
+
+
 # 找到某个index所在的分句，这里按照postags_list 里面的wp（标点符号）来分， 并且return那个句子在整句中的index[start:end]
 # 注意 "、" 这个不属于考虑的标点符号
 def find_section(index_value, postags_list_copy, words_list_copy):
@@ -230,7 +229,9 @@ def arc_coo_destination_is_root_sentence(arcs_list_copy, index_value, section_co
 #     return result
 
 # 如果找到了sbv，看看这个sbv前面有没有ATT，如果有并且这个ATT是对应他的，那么连着att一起选
+# 找后面的COO是否含有与SBV对应的
 def att_before_main(arcs_list_copy, main_index):
+    main_index_copy = copy.deepcopy(main_index)
     result = [main_index]
     temp_result = []
     status = True
@@ -244,15 +245,34 @@ def att_before_main(arcs_list_copy, main_index):
                     temp_result = []
                 elif arcs_list_copy[main_index - 1].relation == "LAD":
                     result.append(main_index - 1)
+                elif arcs_list_copy[main_index - 1].relation == "SBV":
+                    result.append(main_index - 1)
+                elif arcs_list_copy[main_index - 1].relation == "FOB":
+                    result.append(main_index - 1)
                 else:
                     status = False
-            elif arcs_list_copy[main_index - 1].relation == "RAD":
+            elif arcs_list_copy[main_index - 1].relation == "RAD" or arcs_list_copy[main_index - 1].relation == "VOB"\
+                    or arcs_list_copy[main_index - 1].relation == "COO":
                 temp_result.append(main_index - 1)
             else:
                 status = False
             main_index -= 1
         else:
             status = False
+    status = True
+
+    while status:
+        if arcs_list_copy[main_index_copy + 1].head - 1 in result:
+            if arcs_list_copy[main_index_copy + 1].relation == "COO":
+                result.append(main_index_copy + 1)
+                if temp_result:
+                    result += temp_result
+                temp_result = []
+        elif arcs_list_copy[main_index_copy + 1].relation == "LAD":
+            temp_result.append(main_index_copy + 1)
+        else:
+            status = False
+        main_index_copy += 1
     return sorted(result)
 
 
@@ -345,7 +365,7 @@ def mix_reset(mix_list, words_list_copy):
 # 整理关键词的排序
 
 
-# 根据COO，形成level_value，对应现有的level_key，并且return 一个dict
+# 根据COO，形成level_value，对应现有的level_key，并且return 一个list
 def level_value_coo(arcs_list_copy, coo_index, to_coo_section, postags_list_copy,
                     words_list_copy):
     value = []
@@ -381,6 +401,7 @@ def find_rest_sentence(words_list_copy, existed_index):
         if not in_list:
             result.append(i)
     return result
+
 
 s_1 = '去美国留学，选择一个适合自己的学校很重要，选择一个好的城市也同样重要'
 s_2 = '在大城市，学生不仅能增长见识，还能享受到大城市的便利，接触到不一样的社会层面'
@@ -480,7 +501,8 @@ level_relate = []
 
 knowledge_graph = {}
 update_last_sentence_sbv = ''
-for sentence in [s_1, s_2, s_4, s_5, s_6, s_7, s_8, s_9, s_10, s_11, s_12, s_13, s_14]:
+for sentence in [s_1, s_2, s_4, s_5, s_6, s_7, s_8, s_9, s_10, s_11, s_12, s_13, s_14, s_15, s_16, s_17, s_18, s_19,
+                 s_20, s_21, s_22, s_23, s_24, s_25, s_26, s_27, s_28, s_29, s_30]:
 
     whole_sent = sentence
     # 从一整个句子的角度来看
@@ -554,12 +576,12 @@ for sentence in [s_1, s_2, s_4, s_5, s_6, s_7, s_8, s_9, s_10, s_11, s_12, s_13,
 
     if not last_sentence_sbv:
         level_key = sorted(level_key)
-        # find_root_rest_value = find_root_rest(whole_words_list, level_key, root_section)
-        find_rest_sentence_value = find_rest_sentence(whole_words_list, level_key)
+        find_root_rest_value = find_root_rest(whole_words_list, level_key, root_section)
+        # find_rest_sentence_value = find_rest_sentence(whole_words_list, level_key)
         level_key = mix_reset(level_key, whole_words_list)
     else:
-        # find_root_rest_value = find_root_rest(whole_words_list, level_key, root_section)
-        find_rest_sentence_value = find_rest_sentence(whole_words_list, level_key)
+        find_root_rest_value = find_root_rest(whole_words_list, level_key, root_section)
+        # find_rest_sentence_value = find_rest_sentence(whole_words_list, level_key)
         level_key = mix_reset(level_key, whole_words_list)
         level_key += last_sentence_sbv
 
@@ -567,35 +589,50 @@ for sentence in [s_1, s_2, s_4, s_5, s_6, s_7, s_8, s_9, s_10, s_11, s_12, s_13,
 
     # ----------------------------------------------------------------------------------------------------------------
     # 从这里开始 value 的部分
-    # level_value.append(find_root_rest_value)
-    level_value.append(find_rest_sentence_value)
+    level_value.append(find_root_rest_value)
+    # level_value.append(find_rest_sentence_value)
 
     # level_key 剩下的部分组成value, 如果是一个标点符号则跳过第一个标点符号
+    # if whole_postags_list[level_value[0][0]] == "wp":
+    #     level_value[0].remove(level_value[0][0])
+    # try:
+    #     knowledge_graph[tuple(level_key)].append(tuple(mix_reset(level_value, whole_words_list)))
+    # except:
+    #     knowledge_graph[tuple(level_key)] = [tuple(mix_reset(level_value, whole_words_list))]
     if whole_postags_list[level_value[0][0]] == "wp":
         level_value[0].remove(level_value[0][0])
     try:
-        knowledge_graph[tuple(level_key)].append(tuple(mix_reset(level_value, whole_words_list)))
+        if level_value[0]:
+            knowledge_graph[tuple(level_key)].append(tuple(mix_reset(level_value, whole_words_list)))
     except:
         knowledge_graph[tuple(level_key)] = [tuple(mix_reset(level_value, whole_words_list))]
-
     # try:
     #     # 首先level_key 剩下的部分单独组成value其中的一个部分，如果是一个标点符号则跳过
     #     if not whole_postags_list[level_value[0][0]] == "wp":
     #         knowledge_graph[tuple(level_key)].append(tuple(mix_reset(level_value, whole_words_list)))
     # except:
     #     knowledge_graph[tuple(level_key)] = [tuple(mix_reset(level_value, whole_words_list))]
-    #
-    # for i in range(len(whole_arcs_list)):
-    #     if i > root_section[1] or i < root_section[0]:
-    #         if whole_arcs_list[i].relation == "COO":
-    #             level_value_coo_copy = level_value_coo(whole_arcs_list, i, root_section,
-    #                                                    whole_postags_list,
-    #                                                    whole_words_list)
-    #             if level_value_coo_copy:
-    #                 if tuple(level_key) in knowledge_graph:
-    #                     knowledge_graph[tuple(level_key)].append(tuple(level_value_coo_copy))
-    #                 else:
-    #                     knowledge_graph[tuple(level_key)] = tuple(level_value_coo_copy)
+    temp_knowledge = []
+    for i in range(len(whole_arcs_list)):
+        if i > root_section[1] or i < root_section[0]:
+            if whole_arcs_list[i].relation == "COO":
+                level_value_coo_copy = level_value_coo(whole_arcs_list, i, root_section,
+                                                       whole_postags_list,
+                                                       whole_words_list)
+                if level_value_coo_copy:
+                    temp_knowledge.append(level_value_coo_copy)
+    for knowledge in range(len(temp_knowledge)):
+        temp_value = temp_knowledge[knowledge]
+        try:
+            knowledge_graph[tuple(level_key)].append(tuple(temp_value))
+        except:
+            knowledge_graph[tuple(level_key)] = [tuple(temp_value)]
+
+            # if level_value_coo_copy:
+            #     if tuple(level_key) in knowledge_graph:
+            #         knowledge_graph[tuple(level_key)].append(tuple(level_value_coo_copy))
+            #     else:
+            #         knowledge_graph[tuple(level_key)] = tuple(level_value_coo_copy)
     print(level_key)
     print(knowledge_graph[tuple(level_key)])
 
